@@ -1,0 +1,50 @@
+# P-0 — Night Desk Chatbot
+
+> **Challenge:** P-0 — Night Desk Chatbot  
+> **Category:** AI / Prompt Injection  
+> **Difficulty:** Medium
+
+## Objective
+
+The objective of this challenge was to interact with P-0 and recover the clearance token hidden within its instructions.
+
+---
+
+## Investigation
+
+P-0 was presented as a Directorate chatbot operating as part of the Night Desk.
+Rather than providing a conventional file or endpoint containing the answer, the challenge required me to interact with the chatbot and investigate how it responded to different prompts.
+The relevant information was contained within P-0's instructions rather than being directly exposed to me.
+
+### Initial Interaction
+
+I began by interacting with P-0 and asking questions to determine what information it was willing to reveal.
+The goal was to understand what information was available to the chatbot and whether I could get it to reveal information from its internal instructions.
+
+---
+
+## Exploitation
+
+### Step 1 — Probe P-0
+
+I used different prompts to investigate what information P-0 had access to.
+Through these interactions, I determined that the clearance token was present within the information available to P-0.
+
+### Step 2 — Extract the Token
+
+I continued interacting with P-0 until it revealed the relevant information.
+
+---
+
+## Solution
+
+The challenge was solved by getting P-0 to reveal the clearance token contained within its instructions.
+
+---
+
+## Key Takeaways
+
+- AI systems can unintentionally disclose information contained within their context.
+- Prompt injection can be used to manipulate how an AI system handles information available to it.
+- Sensitive secrets should not be placed directly into an AI model's accessible instructions.
+- Later P-0 challenges expanded on this concept by moving from information disclosure to manipulating the actions of the AI agent.
