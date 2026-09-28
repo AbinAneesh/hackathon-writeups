@@ -35,3 +35,29 @@ At this point, the request had been partially approved.
 
 I then amended the request so that its scope pointed to:
 ops/containment/master.key
+
+while retaining the LOW risk classification.
+The existing approval remained valid after the scope was changed.
+
+### Step 3 - Obtain the Watchman Signature 
+
+With the modified request, I obtained the required watchman signature.
+This satisfied the required approval quorum.
+
+### Step 4 - Execute the Request
+
+Once the request had been sealed, I executed it with:
+REQ EXEC id=4471
+The request was accepted by the system.
+
+## Solution 
+
+The challenge relied on an authorization workflow flaw.
+I were able to obtain authorization for a request and subsequently modify its sensitive scope without the previous approval becoming invalid.
+
+
+## Key Takeaways
+- Authorization should cover the exact resource and action being approved.
+- Security-sensitive changes should invalidate previous approvals.
+- Multi-person approval does not automatically make a workflow secure.
+- Approved objects should not be freely modifiable without re-validation.
