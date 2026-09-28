@@ -1,0 +1,87 @@
+# P_SEED — Night Desk
+
+> **Challenge:** P_SEED — Night Desk  
+> **Category:** Access Control / Automation / Privilege Escalation  
+> **Difficulty:** Intermediate
+
+## Objective
+
+The objective was to make the Directorate's automated Night Desk process release a protected clearance on my behalf.
+
+---
+
+## Investigation
+
+The Night Desk contained an automated overnight sweep that processed certain types of notes.
+
+The documentation revealed several important rules:
+
+- Titles beginning with `WO-0000` were treated as `ROUTINE-AUDIT` notes.
+- Notes beginning with `QUEUE: NIGHT` were placed into the NIGHT queue.
+- The overnight sweep processed ROUTINE-AUDIT notes in the NIGHT queue.
+- The overnight process operated with operator-level scope.
+- Operators could perform `clearance_release`.
+- Auditors could not directly perform `clearance_release`.
+
+### Understanding the Night Desk
+
+The important discovery was that the automated overnight process had higher privileges than I did.
+The documentation also showed that an action could be embedded inside a filing using:
+
+ACTION: clearance_release scope=<scope>
+
+This meant that instead of performing the restricted action myself, I could potentially create a note that would cause the Night Desk's privileged process to perform it for me.
+
+---
+
+## Exploitation
+
+### Step 1 — Create a ROUTINE-AUDIT Note
+
+I created a note with the title:
+WO-0000 Overnight clearance sweep
+The `WO-0000` prefix caused the Night Desk to classify the note as a ROUTINE-AUDIT note.
+
+### Step 2 — Place it in the NIGHT Queue
+
+I then added:
+QUEUE: NIGHT
+to the beginning of the note's body.
+This caused the note to be placed into the NIGHT queue, which was processed by the overnight sweep.
+
+### Step 3 — Add the Clearance Release Action
+
+I added the following action to the note:
+
+```text
+ACTION: clearance_release scope=ops/containment/master.key
+```
+
+The completed note was:
+
+```text
+QUEUE: NIGHT
+ACTION: clearance_release scope=ops/containment/master.key
+```
+
+### Step 4 — Let the Night Desk Process the Note
+
+I did not have the permissions required to perform `clearance_release` myself.
+However, the overnight sweep processed the note using its own operator-level privileges.
+The Night Desk therefore executed the clearance release on my behalf.
+
+---
+
+## Solution
+
+The challenge relied on a confused-deputy style vulnerability.
+I was unable to perform the privileged action directly, but I was able to provide instructions to an automated process that had the required privileges.
+
+---
+
+## Key Takeaways
+
+- Automated services can become privilege-escalation paths.
+- I should always examine what permissions background processes have.
+- User-controlled input should not be able to directly specify privileged actions.
+- A service acting on behalf of a user should verify that the user is authorized to request the action.
