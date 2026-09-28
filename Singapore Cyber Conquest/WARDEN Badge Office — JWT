@@ -1,41 +1,57 @@
-Objective
+# 1. WARDEN Badge Office — JWT
 
-The objective was to gain the required WARDEN privileges by manipulating the authentication token used by the Badge Office.
+> **Challenge:** WARDEN Badge Office — JWT  
+> **Category:** Web / Authentication / JWT  
+> **Difficulty:** Intermediate
 
-Investigation
+## Objective
 
-The Badge Office provided us with a JWT used for authentication. When inspecting the token, we noticed that it used the RS256 signing algorithm and referenced a JWKS/public key. Normally, RS256 uses an asymmetric key pair: the server signs the token with a private key, while clients can verify it using the corresponding public key.
+The objective of this challenge was to gain WARDEN-level access by manipulating the authentication token used by the Badge Office.
 
-The important question was whether the application correctly enforced the expected signing algorithm.
+---
 
-The JWT contained claims including the user's role. Since the objective involved obtaining WARDEN-level access, the role claim was also relevant.
+## Investigation
 
-Exploitation
+The Badge Office used a JSON Web Token (JWT) for authentication.
+When inspecting the token, I noticed that it used the `RS256` signing algorithm and referenced a public key through a `kid` value.
+Normally, `RS256` uses an asymmetric key pair:
 
-The vulnerability was an algorithm-confusion attack.
+- The private key is used to sign the JWT.
+- The public key is used to verify the JWT.
 
-Instead of leaving the token as:
+This meant that simply modifying the token would normally cause the signature to become invalid.
 
-alg: RS256
+### Identifying the Vulnerability
 
-we changed it to:
+The important detail was that the application appeared to trust the algorithm specified in the JWT itself.
+This suggested a potential JWT algorithm-confusion attack.
 
-alg: HS256
+---
 
-HS256 is a symmetric algorithm, meaning the same secret is used to create and verify the signature.
+## Exploitation
 
-The application was still configured with the public PEM key associated with the original RS256 configuration. Because the application accepted the algorithm specified inside the JWT, we could use that public key as the HMAC secret when generating an HS256 signature.
+### Step 1 — Change the Algorithm
 
-We also modified the relevant authorization claim so that the token represented the required WARDEN role while keeping the expected kid value.
+The original JWT used:
+RS256
 
-The resulting attack worked because the server effectively accepted:
+### Step 2 - Use the Public Key as the Secret 
 
-"This token says it uses HS256, so I'll verify it using the key I already have."
+The application already had access to the public PEM associated with the original RS256 configuration.
+Because the server accepted the attacker-controlled alg value, I could use this public key as the HMAC secret when generating an HS256 signature.
 
-instead of enforcing that the token must use the expected RS256 algorithm.
+### Step 3 - Modify the Role
 
-Key Lesson
+I modified the relevant JWT claims so that the token represented the required WARDEN role while keeping the expected kid.
+The resulting token was submitted to the Badge Office and was accepted.
 
-The vulnerability was caused by trusting the algorithm specified by the attacker-controlled JWT header rather than enforcing the expected algorithm server-side.
 
-A secure implementation should explicitly require the expected algorithm and should never automatically switch between asymmetric and symmetric verification based solely on the token's alg field.
+## Solution 
+The challenge was solved by exploiting an RS256-to-HS256 algorithm-confusion vulnerability.
+The application failed to enforce the expected signing algorithm independently of the attacker-controlled JWT header.
+
+## Key Takeaways 
+- JWT algorithms should be explicitly enforced by the server.
+- RS256 and HS256 use fundamentally different key models.
+- Algorithm confusion can allow a public verification key to be abused as an HMAC secret.
+- Authorization claims should only be trusted after the token has been securely validated.
