@@ -1,0 +1,37 @@
+3270 Clearance Quorum Facility
+
+> **Challenge:** 3270 Clearance Quorum Facility  
+> **Category:** Access Control / Workflow Logic  
+> **Difficulty:** Intermediate
+
+## Objective
+
+The objective was to get a sensitive clearance request through the Directorate's approval process and execute it.
+
+---
+
+## Investigation
+
+The facility used a multi-stage approval workflow for sensitive requests.
+I was given request `4471`, which referenced case `1001`.
+The system required authorization from different roles before the request could be executed.
+
+### Understanding the Approval Workflow
+
+The request contained several properties, including its risk level and scope.
+The important discovery was that these properties could be modified independently.
+This raised the possibility that I could obtain approval for a request and then change what the approved request actually targeted.
+
+---
+
+## Exploitation
+
+### Step 1 — Obtain the Auditor Signature
+
+I first worked with request `4471` and obtained the required auditor signature.
+At this point, the request had been partially approved.
+
+### Step 2 — Change the Scope
+
+I then amended the request so that its scope pointed to:
+ops/containment/master.key
