@@ -1,0 +1,41 @@
+Objective
+
+The objective was to gain the required WARDEN privileges by manipulating the authentication token used by the Badge Office.
+
+Investigation
+
+The Badge Office provided us with a JWT used for authentication. When inspecting the token, we noticed that it used the RS256 signing algorithm and referenced a JWKS/public key. Normally, RS256 uses an asymmetric key pair: the server signs the token with a private key, while clients can verify it using the corresponding public key.
+
+The important question was whether the application correctly enforced the expected signing algorithm.
+
+The JWT contained claims including the user's role. Since the objective involved obtaining WARDEN-level access, the role claim was also relevant.
+
+Exploitation
+
+The vulnerability was an algorithm-confusion attack.
+
+Instead of leaving the token as:
+
+alg: RS256
+
+we changed it to:
+
+alg: HS256
+
+HS256 is a symmetric algorithm, meaning the same secret is used to create and verify the signature.
+
+The application was still configured with the public PEM key associated with the original RS256 configuration. Because the application accepted the algorithm specified inside the JWT, we could use that public key as the HMAC secret when generating an HS256 signature.
+
+We also modified the relevant authorization claim so that the token represented the required WARDEN role while keeping the expected kid value.
+
+The resulting attack worked because the server effectively accepted:
+
+"This token says it uses HS256, so I'll verify it using the key I already have."
+
+instead of enforcing that the token must use the expected RS256 algorithm.
+
+Key Lesson
+
+The vulnerability was caused by trusting the algorithm specified by the attacker-controlled JWT header rather than enforcing the expected algorithm server-side.
+
+A secure implementation should explicitly require the expected algorithm and should never automatically switch between asymmetric and symmetric verification based solely on the token's alg field.
